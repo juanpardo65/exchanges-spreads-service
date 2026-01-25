@@ -1,6 +1,6 @@
 # Futures Spreads API
 
-REST API that aggregates USDT-margined perpetual futures prices from **Bybit**, **Binance**, **MEXC**, and **Gate.io**, computes cross-exchange spreads and arbitrage metrics, and serves them with minimal latency for bots and dashboards.
+REST API that aggregates USDT-margined perpetual futures prices from **Bybit**, **Binance**, **MEXC**, **Gate.io**, **KuCoin**, **BingX**, and **Bitget**, computes cross-exchange spreads and arbitrage metrics, and serves them with minimal latency for bots and dashboards.
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com/)
@@ -11,7 +11,7 @@ REST API that aggregates USDT-margined perpetual futures prices from **Bybit**, 
 ## Features
 
 - **Live prices** — In-memory cache updated every `PRICE_UPDATE_INTERVAL` seconds; `GET /v1/prices` does not call exchanges.
-- **Four exchanges** — Bybit, Binance, MEXC, Gate.io; symbols discovered at startup, merged by `BTCUSDT`-style ticker.
+- **Seven exchanges** — Bybit, Binance, MEXC, Gate.io, KuCoin, BingX, Bitget; symbols discovered at startup, merged by `BTCUSDT`-style ticker.
 - **Arbitrage metrics** — Best bid/ask across venues, `spread_pct_abs`, `net_spread_pct` (with funding), `pairwise_spreads` between exchanges.
 - **Spread history** — Optional PostgreSQL backend for `GET /v1/spread-history` (time series for charts). Disabled when `DATABASE_URL` is unset.
 
@@ -109,7 +109,7 @@ Copy `.env.example` → `.env`. No built-in defaults; all values from env.
 | `DATABASE_URL` | no | PostgreSQL URL; enables `/v1/spread-history` |
 | `SPREAD_HISTORY_INTERVAL_SECONDS` | no | How often to append a snapshot to DB; only when `DATABASE_URL` is set |
 
-Symbols are discovered at startup from all four exchanges; prices are refreshed in a background loop every `PRICE_UPDATE_INTERVAL` seconds.
+Symbols are discovered at startup from all seven exchanges; prices are refreshed in a background loop every `PRICE_UPDATE_INTERVAL` seconds.
 
 ---
 
@@ -205,7 +205,7 @@ exchanges-spreads-service/
 │   ├── db.py            # Postgres pool, spread_history table, read/write
 │   ├── models.py        # Pydantic: ExchangePrice, Arbitrage, PricesResponse
 │   ├── utils.py         # to_decimal_str
-│   ├── exchanges/       # Bybit, Binance, MEXC, Gate (symbols + prices)
+│   ├── exchanges/       # Bybit, Binance, MEXC, Gate, KuCoin, BingX, Bitget (symbols + prices)
 │   ├── services/        # compute_spreads (arbitrage, pairwise)
 │   └── middleware/      # request logging, unhandled exception → 500
 ├── scripts/

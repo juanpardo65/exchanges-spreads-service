@@ -1,7 +1,7 @@
 [project]
 name = "futures-spreads-api"
 version = "0.1.0"
-description = "REST API for USDT perpetual futures spreads across Bybit, Binance, MEXC, and Gate.io"
+description = "REST API for USDT perpetual futures spreads across Bybit, Binance, MEXC, Gate.io, KuCoin, BingX, Bitget"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }

@@ -24,13 +24,31 @@ def to_exchange_symbol(canonical: str, exchange: str) -> str:
             if canonical.endswith(q):
                 return f"{canonical[:-len(q)]}_{q}"
         return canonical
+    if exchange == "kucoin":
+        if not canonical.endswith("USDT"):
+            return canonical
+        base = canonical[:-4]
+        base = "XBT" if base == "BTC" else base
+        return f"{base}USDTM"
+    if exchange == "bingx":
+        if not canonical.endswith("USDT"):
+            return canonical
+        return f"{canonical[:-4]}-USDT"
+    if exchange == "bitget":
+        # V2 API uses symbol without suffix (e.g. BTCUSDT)
+        return canonical
     return canonical
 
 
 def to_canonical_symbol(exchange_symbol: str) -> str:
     s = (exchange_symbol or "").strip().upper()
-    if "_" in s:
-        return s.replace("_", "")
+    if s.endswith("_UMCBL"):
+        s = s[:-6]
+    if s.endswith("USDTM"):
+        s = s[:-1]
+        if s.startswith("XBT"):
+            s = "BTC" + s[3:]
+    s = s.replace("_", "").replace("-", "")
     return s
 
 

@@ -18,6 +18,40 @@ def compute_spreads(prices: list[ExchangePrice]) -> tuple[Arbitrage, dict[str, s
     best_bid = max(prices, key=lambda p: float(p.bid or "0"))
     best_ask = min(prices, key=lambda p: float(p.ask or "inf"))
 
+    # Arbitrage only across different exchanges; avoid best_bid and best_ask from the same venue
+    if best_bid.exchange == best_ask.exchange:
+        others = [p for p in prices if p.exchange != best_bid.exchange]
+        if not others:
+            # single exchange: no cross-arbitrage
+            _by_ex: dict[str, ExchangePrice] = {p.exchange: p for p in prices}
+            _ex_names = sorted(_by_ex.keys())
+            _pairwise: dict[str, str] = {}
+            for i in range(len(_ex_names)):
+                for j in range(i + 1, len(_ex_names)):
+                    a, b = _ex_names[i], _ex_names[j]
+                    va = float(_by_ex[a].last or "0")
+                    vb = float(_by_ex[b].last or "0")
+                    _pairwise[f"{a}_{b}"] = to_decimal_str(str(round(va - vb, 8)))
+            return (
+                Arbitrage(
+                    best_bid=BestPrice(exchange=best_bid.exchange, price=best_bid.bid),
+                    best_ask=BestPrice(exchange=best_ask.exchange, price=best_ask.ask),
+                    spread_pct_abs=0.0,
+                    net_spread_pct=0.0,
+                    direction="No arbitrage",
+                ),
+                _pairwise,
+            )
+        # other venues: pick cross-pair with max spread
+        best_ask_cross = min(others, key=lambda p: float(p.ask or "inf"))
+        best_bid_cross = max(others, key=lambda p: float(p.bid or "0"))
+        spread1 = float(best_bid.bid or "0") - float(best_ask_cross.ask or "0")
+        spread2 = float(best_bid_cross.bid or "0") - float(best_ask.ask or "0")
+        if spread1 >= spread2:
+            best_bid, best_ask = best_bid, best_ask_cross
+        else:
+            best_bid, best_ask = best_bid_cross, best_ask
+
     spread = float(best_bid.bid or "0") - float(best_ask.ask or "0")
     ask_f = float(best_ask.ask or "0")
     spread_pct_abs = (abs(spread) / (ask_f or 1) * 100) if ask_f else 0.0

@@ -18,12 +18,18 @@ from . import db
 from .config import Settings
 from .exchanges import (
     fetch_all_prices_binance,
+    fetch_all_prices_bingx,
+    fetch_all_prices_bitget,
     fetch_all_prices_bybit,
     fetch_all_prices_gate,
+    fetch_all_prices_kucoin,
     fetch_all_prices_mexc,
     fetch_all_symbols_binance,
+    fetch_all_symbols_bingx,
+    fetch_all_symbols_bitget,
     fetch_all_symbols_bybit,
     fetch_all_symbols_gate,
+    fetch_all_symbols_kucoin,
     fetch_all_symbols_mexc,
 )
 from .middleware import setup_middleware
@@ -49,12 +55,18 @@ DISCOVERY_FETCHERS = [
     ("binance", fetch_all_symbols_binance),
     ("mexc", fetch_all_symbols_mexc),
     ("gate", fetch_all_symbols_gate),
+    ("kucoin", fetch_all_symbols_kucoin),
+    ("bingx", fetch_all_symbols_bingx),
+    ("bitget", fetch_all_symbols_bitget),
 ]
 BULK_PRICE_FETCHERS = [
     ("bybit", fetch_all_prices_bybit),
     ("binance", fetch_all_prices_binance),
     ("mexc", fetch_all_prices_mexc),
     ("gate", fetch_all_prices_gate),
+    ("kucoin", fetch_all_prices_kucoin),
+    ("bingx", fetch_all_prices_bingx),
+    ("bitget", fetch_all_prices_bitget),
 ]
 
 
@@ -155,7 +167,7 @@ async def _price_update_loop(app: FastAPI) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Symbol discovery: loading USDT perpetuals from Bybit, Binance, MEXC, Gate...")
+    logger.info("Symbol discovery: loading USDT perpetuals from Bybit, Binance, MEXC, Gate, KuCoin, BingX, Bitget...")
     app.state.symbols = []
     app.state.prices_cache = {}
     pool = None
