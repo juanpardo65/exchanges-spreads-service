@@ -1,0 +1,17 @@
+# Postgres for spread history. Run: docker compose up -d postgres
+# Then set in .env: DATABASE_URL=postgresql://spreads:spreads@localhost:5432/spreads
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: spreads
+      POSTGRES_PASSWORD: spreads
+      POSTGRES_DB: spreads
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

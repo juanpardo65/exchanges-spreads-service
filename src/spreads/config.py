@@ -1,0 +1,18 @@
+"""Configuration from environment. No defaults: all values from .env."""
+
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class Settings(BaseSettings):
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
+    http_timeout: int
+    port: int
+    log_level: str
+    price_update_interval: int
+    database_url: str | None = None
+    spread_history_interval_seconds: int | None = None
