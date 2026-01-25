@@ -27,9 +27,9 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/username/exhanges-spreads-service"
-Repository = "https://github.com/username/exhanges-spreads-service"
-Documentation = "https://github.com/username/exhanges-spreads-service#readme"
+Homepage = "https://github.com/bohdanlyshuk/exchanges-spreads-service"
+Repository = "https://github.com/bohdanlyshuk/exchanges-spreads-service"
+Documentation = "https://github.com/bohdanlyshuk/exchanges-spreads-service#readme"
 
 [project.optional-dependencies]
 dev = [

@@ -21,7 +21,7 @@ REST API that aggregates USDT-margined perpetual futures prices from **Bybit**, 
 
 ```bash
 git clone <repo>
-cd exhanges-spreads-service
+cd exchanges-spreads-service
 cp .env.example .env
 # edit .env: HTTP_TIMEOUT, PORT, LOG_LEVEL, PRICE_UPDATE_INTERVAL
 
@@ -49,17 +49,17 @@ Requires **uv** for `./run.sh`. Then: `http://localhost:8000/health`, `http://lo
 {
   "symbol": "BTCUSDT",
   "prices": [
-    { "exchange": "bybit",  "bid": "96500.5", "ask": "96501.0", "last": "96500.8", "mark": "96500.7", "funding_rate": "0.0001" },
-    { "exchange": "binance", "bid": "96500.2", "ask": "96501.2", "last": "96500.9", "mark": "96500.8", "funding_rate": "0.00009" }
+    { "exchange": "bybit",  "bid": "96501.9", "ask": "96502.0", "last": "96501.9", "mark": "96501.8", "funding_rate": "0.0001" },
+    { "exchange": "binance", "bid": "96501.0", "ask": "96501.2", "last": "96501.1", "mark": "96501.0", "funding_rate": "0.000099" }
   ],
   "arbitrage": {
-    "best_bid": { "exchange": "bybit",  "price": "96500.5" },
+    "best_bid": { "exchange": "bybit",  "price": "96501.9" },
     "best_ask": { "exchange": "binance", "price": "96501.2" },
     "spread_pct_abs": 0.00073,
-    "net_spread_pct": 0.00082,
-    "direction": "LONG on binance @ 96501.2, SHORT on bybit @ 96500.5"
+    "net_spread_pct": 0.00083,
+    "direction": "LONG on binance @ 96501.2, SHORT on bybit @ 96501.9"
   },
-  "pairwise_spreads": { "binance_bybit": "-0.0001", "binance_gate": "0.0012", ... },
+  "pairwise_spreads": { "binance_bybit": "-0.8", "binance_gate": "0.0012", ... },
   "errors": []
 }
 ```
@@ -161,6 +161,8 @@ Create DB and user:
 psql -d postgres -f scripts/init-local-db.sql
 ```
 
+If that fails (auth), try: `psql -U postgres -d postgres -f scripts/init-local-db.sql` or on Linux `sudo -u postgres psql -d postgres -f scripts/init-local-db.sql`.
+
 This creates user `spreads` / password `spreads` and database `spreads`. Set `DATABASE_URL` and `SPREAD_HISTORY_INTERVAL_SECONDS` in `.env`.
 
 ---
@@ -196,7 +198,7 @@ docker run -p 8000:8000 --env-file .env spreads
 ## Project structure
 
 ```
-exhanges-spreads-service/
+exchanges-spreads-service/
 ├── src/spreads/
 │   ├── main.py          # FastAPI app, routes, lifespan, price loop
 │   ├── config.py        # Settings from .env
@@ -209,12 +211,14 @@ exhanges-spreads-service/
 ├── scripts/
 │   └── init-local-db.sql
 ├── tests/
+├── .env.example
 ├── pyproject.toml
 ├── requirements.txt
 ├── Dockerfile
 ├── docker-compose.yml
 ├── run.sh
-└── Makefile
+├── Makefile
+└── LICENSE
 ```
 
 ---
