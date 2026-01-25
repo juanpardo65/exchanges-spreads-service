@@ -1,5 +1,3 @@
-"""Binance USDT-margined futures (fapi) provider."""
-
 import asyncio
 
 import httpx
@@ -10,10 +8,6 @@ BASE = "https://fapi.binance.com"
 
 
 async def fetch_all_symbols_binance(timeout: float) -> set[str]:
-    """
-    Fetch all USDT-margined perpetual symbols from Binance fapi.
-    GET /fapi/v1/exchangeInfo; filter contractType=PERPETUAL, quoteAsset=USDT.
-    """
     async with httpx.AsyncClient(timeout=timeout) as client:
         r = await client.get(f"{BASE}/fapi/v1/exchangeInfo")
         r.raise_for_status()
@@ -27,10 +21,6 @@ async def fetch_all_symbols_binance(timeout: float) -> set[str]:
 
 
 async def fetch_all_prices_binance(timeout: float) -> dict[str, ExchangePrices]:
-    """
-    Fetch all USDT-margined perpetual tickers from Binance in two requests.
-    /fapi/v1/ticker/24hr (no symbol) + /fapi/v1/premiumIndex (no symbol); merge by symbol.
-    """
     async with httpx.AsyncClient(timeout=timeout) as client:
         t24, prem = await asyncio.gather(
             client.get(f"{BASE}/fapi/v1/ticker/24hr"),
@@ -63,10 +53,6 @@ async def fetch_all_prices_binance(timeout: float) -> dict[str, ExchangePrices]:
 
 
 async def fetch_binance(symbol: str, timeout: float) -> ExchangePrices:
-    """
-    Fetch futures ticker from Binance fapi.
-    Combines /fapi/v1/ticker/24hr (bid/ask/last) and /fapi/v1/premiumIndex (mark).
-    """
     sym = to_exchange_symbol(symbol, "binance")
     async with httpx.AsyncClient(timeout=timeout) as client:
         t24, prem = await asyncio.gather(

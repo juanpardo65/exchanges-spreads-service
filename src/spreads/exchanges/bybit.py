@@ -1,5 +1,3 @@
-"""Bybit futures (linear / USDT-margined) provider."""
-
 import httpx
 
 from .base import ExchangePrices, to_canonical_symbol, to_exchange_symbol
@@ -8,10 +6,6 @@ BASE = "https://api.bybit.com"
 
 
 async def fetch_all_symbols_bybit(timeout: float) -> set[str]:
-    """
-    Fetch all USDT-margined perpetual symbols from Bybit.
-    GET /v5/market/tickers?category=linear (no symbol) returns all; list[].symbol is canonical.
-    """
     async with httpx.AsyncClient(timeout=timeout) as client:
         r = await client.get(f"{BASE}/v5/market/tickers", params={"category": "linear"})
         r.raise_for_status()
@@ -23,10 +17,6 @@ async def fetch_all_symbols_bybit(timeout: float) -> set[str]:
 
 
 async def fetch_all_prices_bybit(timeout: float) -> dict[str, ExchangePrices]:
-    """
-    Fetch all USDT-margined perpetual tickers from Bybit in one request.
-    GET /v5/market/tickers?category=linear (no symbol). Returns dict[canonical_symbol, ExchangePrices].
-    """
     async with httpx.AsyncClient(timeout=timeout) as client:
         r = await client.get(f"{BASE}/v5/market/tickers", params={"category": "linear"})
         r.raise_for_status()
@@ -52,10 +42,6 @@ async def fetch_all_prices_bybit(timeout: float) -> dict[str, ExchangePrices]:
 
 
 async def fetch_bybit(symbol: str, timeout: float) -> ExchangePrices:
-    """
-    Fetch futures ticker from Bybit. category=linear = USDT-margined perpetuals.
-    Uses symbol as-is (BTCUSDT).
-    """
     sym = to_exchange_symbol(symbol, "bybit")
     async with httpx.AsyncClient(timeout=timeout) as client:
         r = await client.get(

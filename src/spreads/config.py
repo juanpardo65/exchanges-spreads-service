@@ -1,5 +1,3 @@
-"""Configuration from environment. No defaults: all values from .env."""
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 

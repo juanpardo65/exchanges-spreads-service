@@ -1,10 +1,10 @@
-"""Postgres: pool, spread_history table, write and read."""
-
 import logging
 from datetime import datetime, timezone
 from typing import Any
 
 import asyncpg
+
+from .models import PricesResponse
 
 logger = logging.getLogger(__name__)
 
@@ -24,7 +24,6 @@ CREATE INDEX IF NOT EXISTS idx_spread_history_symbol_ts ON spread_history (symbo
 
 
 async def create_pool(database_url: str) -> asyncpg.Pool:
-    """Create asyncpg pool. min_size=1, max_size=4, command_timeout=10."""
     return await asyncpg.create_pool(
         database_url,
         min_size=1,
@@ -34,7 +33,6 @@ async def create_pool(database_url: str) -> asyncpg.Pool:
 
 
 async def ensure_schema(pool: asyncpg.Pool) -> None:
-    """Create spread_history table and index if not exist."""
     async with pool.acquire() as conn:
         await conn.execute(CREATE_TABLE)
         await conn.execute(CREATE_INDEX)
@@ -42,14 +40,8 @@ async def ensure_schema(pool: asyncpg.Pool) -> None:
 
 async def write_spread_history(
     pool: asyncpg.Pool,
-    cache: "dict[str, Any]",  # dict[symbol, PricesResponse]
+    cache: dict[str, PricesResponse],
 ) -> None:
-    """
-    Bulk insert current spread snapshots into spread_history.
-    On DB error, log and skip (do not raise).
-    """
-    from .models import PricesResponse
-
     if not cache:
         return
     now = datetime.now(timezone.utc)
@@ -93,16 +85,11 @@ async def get_spread_history(
     to_ts: datetime,
     interval_minutes: int | None = None,
 ) -> list[dict[str, Any]]:
-    """
-    Select spread_history for symbol in [from_ts, to_ts].
-    If interval_minutes is set, aggregate into buckets (AVG spread_pct_abs, net_spread_pct); else raw rows.
-    Returns list of dicts with ts, spread_pct_abs, net_spread_pct, best_bid_ex, best_ask_ex.
-    """
     async with pool.acquire() as conn:
         if interval_minutes is None or interval_minutes < 1:
             rows = await conn.fetch(
                 """
-                SELECT ts, spread_pct_abs, net_spread_pct, best_bid_ex, best_ask_ex
+                SELECT ts, spread_pct_abs, net_spread_pct
                 FROM spread_history
                 WHERE symbol = $1 AND ts >= $2 AND ts <= $3
                 ORDER BY ts
@@ -111,24 +98,14 @@ async def get_spread_history(
                 from_ts,
                 to_ts,
             )
-            return [
-                {
-                    "ts": r["ts"],
-                    "spread_pct_abs": float(r["spread_pct_abs"]),
-                    "net_spread_pct": float(r["net_spread_pct"]),
-                    "best_bid_ex": r["best_bid_ex"] or "",
-                    "best_ask_ex": r["best_ask_ex"] or "",
-                }
-                for r in rows
-            ]
+            return [{"ts": r["ts"], "spread_pct_abs": float(r["spread_pct_abs"]), "net_spread_pct": float(r["net_spread_pct"])} for r in rows]
+        # Bucket: floor(minute/interval)*interval
         rows = await conn.fetch(
             """
             SELECT
                 date_trunc('hour', ts) + (floor(extract(minute from ts)::numeric / $4) * $4) * interval '1 minute' AS bucket,
                 avg(spread_pct_abs)::numeric AS spread_pct_abs,
-                avg(net_spread_pct)::numeric AS net_spread_pct,
-                (array_agg(best_bid_ex))[1] AS best_bid_ex,
-                (array_agg(best_ask_ex))[1] AS best_ask_ex
+                avg(net_spread_pct)::numeric AS net_spread_pct
             FROM spread_history
             WHERE symbol = $1 AND ts >= $2 AND ts <= $3
             GROUP BY 1
@@ -139,13 +116,4 @@ async def get_spread_history(
             to_ts,
             interval_minutes,
         )
-        return [
-            {
-                "ts": r["bucket"],
-                "spread_pct_abs": float(r["spread_pct_abs"]),
-                "net_spread_pct": float(r["net_spread_pct"]),
-                "best_bid_ex": r["best_bid_ex"] or "",
-                "best_ask_ex": r["best_ask_ex"] or "",
-            }
-            for r in rows
-        ]
+        return [{"ts": r["bucket"], "spread_pct_abs": float(r["spread_pct_abs"]), "net_spread_pct": float(r["net_spread_pct"])} for r in rows]

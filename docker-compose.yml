@@ -1,5 +1,8 @@
-# Postgres for spread history. Run: docker compose up -d postgres
-# Then set in .env: DATABASE_URL=postgresql://spreads:spreads@localhost:5432/spreads
+# postgres: spread history backend
+#   docker compose up -d postgres
+#
+# postgres + app (profile full):
+#   docker compose --profile full up -d
 
 services:
   postgres:
@@ -12,6 +15,28 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U spreads -d spreads"]
+      interval: 2s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      PORT: 8000
+      HTTP_TIMEOUT: 5
+      LOG_LEVEL: INFO
+      PRICE_UPDATE_INTERVAL: 5
+      DATABASE_URL: postgresql://spreads:spreads@postgres:5432/spreads
+      SPREAD_HISTORY_INTERVAL_SECONDS: 3600
+    depends_on:
+      postgres:
+        condition: service_healthy
+    profiles:
+      - full
 
 volumes:
   postgres_data:

@@ -8,10 +8,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY src/ ./src/
 COPY pyproject.toml ./
 
-# spreads lives in src/spreads; run as module so spreads is importable
 ENV PYTHONPATH=/app/src
-
 EXPOSE 8000
 
-# PORT must be set via --env-file .env or -e PORT=...
-CMD ["sh", "-c", "uvicorn spreads.main:app --host 0.0.0.0 --port \"$PORT\""]
+# PORT, LOG_LEVEL, HTTP_TIMEOUT, PRICE_UPDATE_INTERVAL required;
+# DATABASE_URL, SPREAD_HISTORY_INTERVAL_SECONDS optional. Pass via --env-file .env or -e.
+CMD ["sh", "-c", "uvicorn spreads.main:app --host 0.0.0.0 --port \"${PORT:-8000}\""]

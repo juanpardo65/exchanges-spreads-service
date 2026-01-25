@@ -1,5 +1,3 @@
-"""MEXC USDT-margined futures (contract) provider."""
-
 import httpx
 
 from .base import ExchangePrices, to_canonical_symbol, to_exchange_symbol
@@ -8,10 +6,6 @@ BASE = "https://contract.mexc.com"
 
 
 async def fetch_all_symbols_mexc(timeout: float) -> set[str]:
-    """
-    Fetch all USDT-margined perpetual symbols from MEXC.
-    GET /api/v1/contract/detail; filter futureType=1 (perpetual). symbol is e.g. BTC_USDT.
-    """
     async with httpx.AsyncClient(timeout=timeout) as client:
         r = await client.get(f"{BASE}/api/v1/contract/detail")
         r.raise_for_status()
@@ -27,10 +21,6 @@ async def fetch_all_symbols_mexc(timeout: float) -> set[str]:
 
 
 async def fetch_all_prices_mexc(timeout: float) -> dict[str, ExchangePrices]:
-    """
-    Fetch all USDT-margined perpetual tickers from MEXC.
-    GET /api/v1/contract/ticker without symbol. If data is a list, parse all; if single object, wrap.
-    """
     async with httpx.AsyncClient(timeout=timeout) as client:
         r = await client.get(f"{BASE}/api/v1/contract/ticker")
         r.raise_for_status()
@@ -62,10 +52,6 @@ async def fetch_all_prices_mexc(timeout: float) -> dict[str, ExchangePrices]:
 
 
 async def fetch_mexc(symbol: str, timeout: float) -> ExchangePrices:
-    """
-    Fetch futures ticker from MEXC contract API.
-    Symbol format: BTC_USDT.
-    """
     sym = to_exchange_symbol(symbol, "mexc")
     async with httpx.AsyncClient(timeout=timeout) as client:
         r = await client.get(

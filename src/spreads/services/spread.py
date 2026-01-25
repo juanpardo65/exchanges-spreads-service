@@ -1,21 +1,8 @@
-"""Spread calculation: best_bid, best_ask, arbitrage, pairwise_spreads, direction."""
-
 from ..models import Arbitrage, BestPrice, ExchangePrice
 from ..utils import to_decimal_str
 
 
 def compute_spreads(prices: list[ExchangePrice]) -> tuple[Arbitrage, dict[str, str]]:
-    """
-    From a list of exchange prices, compute arbitrage summary and pairwise spreads.
-
-    - best_bid: max bid across exchanges (best price to open SHORT / sell)
-    - best_ask: min ask across exchanges (best price to open LONG / buy)
-    - spread_pct_abs = abs(best_bid - best_ask) / best_ask * 100 (завжди >= 0)
-    - net_spread_pct = spread_pct_abs + (funding_bid - funding_ask)*100, без abs (чистий спред з урахуванням фандингу за 8h)
-    - direction: "LONG on {ask_ex} @ {ask}, SHORT on {bid_ex} @ {bid}" or "No arbitrage"
-      (futures: open LONG at best_ask, open SHORT at best_bid)
-    - pairwise_spreads: for each pair (A,B) key "A_B" (A < B alphabetically), value = price_A - price_B (using last)
-    """
     if not prices:
         return (
             Arbitrage(
@@ -35,8 +22,7 @@ def compute_spreads(prices: list[ExchangePrice]) -> tuple[Arbitrage, dict[str, s
     ask_f = float(best_ask.ask or "0")
     spread_pct_abs = (abs(spread) / (ask_f or 1) * 100) if ask_f else 0.0
 
-    # Чистий спред з урахуванням фандингу: LONG на ask (платимо funding_ask), SHORT на bid (отримуємо funding_bid)
-    # net = spread_pct_abs + (funding_bid - funding_ask)*100 (funding у decimal, 0.0001 = 0.01%)
+    # net = spread_pct_abs + (funding_bid - funding_ask)*100 (funding in decimal, 0.0001 = 0.01% per 8h)
     funding_bid = float(best_bid.funding_rate or "0")
     funding_ask = float(best_ask.funding_rate or "0")
     net_spread_pct = round(spread_pct_abs + (funding_bid - funding_ask) * 100, 4)

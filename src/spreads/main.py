@@ -1,10 +1,8 @@
-"""FastAPI app: /v1/prices, /health."""
-
 try:
     import uvloop
     uvloop.install()
 except (ImportError, OSError):
-    pass  # uvloop не підтримує Windows або не встановлено
+    pass
 
 import asyncio
 import logging
@@ -28,6 +26,7 @@ from .exchanges import (
     fetch_all_symbols_gate,
     fetch_all_symbols_mexc,
 )
+from .middleware import setup_middleware
 from .models import ExchangePrice, PricesResponse
 from .services import compute_spreads
 from .utils import to_decimal_str
@@ -41,7 +40,6 @@ if not logging.root.handlers:
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S",
     )
-# Prevent httpcore/httpx from flooding logs when our LOG_LEVEL is DEBUG
 for _name in ("httpcore", "httpx"):
     logging.getLogger(_name).setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
@@ -52,21 +50,43 @@ DISCOVERY_FETCHERS = [
     ("mexc", fetch_all_symbols_mexc),
     ("gate", fetch_all_symbols_gate),
 ]
+BULK_PRICE_FETCHERS = [
+    ("bybit", fetch_all_prices_bybit),
+    ("binance", fetch_all_prices_binance),
+    ("mexc", fetch_all_prices_mexc),
+    ("gate", fetch_all_prices_gate),
+]
+
+
+def _parse_ts(s: Optional[str], default: datetime) -> datetime:
+    if not s or not str(s).strip():
+        return default
+    s = str(s).strip()
+    # ISO 8601 or Unix ms
+    if s.isdigit():
+        return datetime.fromtimestamp(int(s) / 1000, tz=timezone.utc)
+    if s.upper().endswith("Z"):
+        s = s[:-1] + "+00:00"
+    dt = datetime.fromisoformat(s)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+def _build_response(symbol: str, prices: list[ExchangePrice], errors: list[dict]) -> PricesResponse:
+    arb, pairwise = compute_spreads(prices)
+    return PricesResponse(
+        symbol=symbol,
+        prices=prices,
+        arbitrage=arb,
+        pairwise_spreads=pairwise,
+        errors=errors,
+    )
 
 
 async def _price_update_loop(app: FastAPI) -> None:
-    """
-    Background loop: every PRICE_UPDATE_INTERVAL seconds after each run,
-    fetches all tickers from each exchange in 4 parallel bulk requests, merges by symbol, writes to prices_cache.
-    """
     timeout = float(settings.http_timeout)
     interval = max(1, settings.price_update_interval)
-    bulk_fetchers = [
-        ("bybit", fetch_all_prices_bybit),
-        ("binance", fetch_all_prices_binance),
-        ("mexc", fetch_all_prices_mexc),
-        ("gate", fetch_all_prices_gate),
-    ]
     while True:
         try:
             symbols = [s for s in (getattr(app.state, "symbols", None) or []) if s and str(s).strip()]
@@ -76,11 +96,11 @@ async def _price_update_loop(app: FastAPI) -> None:
             logger.info("Price update: bulk fetch for %d symbols...", len(symbols))
             t0 = time.perf_counter()
             results = await asyncio.gather(
-                *[f(timeout) for _, f in bulk_fetchers],
+                *[f(timeout) for _, f in BULK_PRICE_FETCHERS],
                 return_exceptions=True,
             )
             by_name: dict[str, tuple[str | None, dict]] = {}
-            for (name, _), r in zip(bulk_fetchers, results):
+            for (name, _), r in zip(BULK_PRICE_FETCHERS, results):
                 if isinstance(r, BaseException):
                     by_name[name] = (str(r), {})
                 else:
@@ -110,6 +130,8 @@ async def _price_update_loop(app: FastAPI) -> None:
                     continue
                 new_cache[sym] = _build_response(sym, prices, errors)
             app.state.prices_cache = new_cache
+
+            # Throttle spread_history writes by SPREAD_HISTORY_INTERVAL_SECONDS
             if settings.database_url and getattr(app.state, "db_pool", None):
                 sec = settings.spread_history_interval_seconds
                 if sec is not None and sec >= 1:
@@ -121,6 +143,7 @@ async def _price_update_loop(app: FastAPI) -> None:
                             app.state.last_spread_history_ts = now_ts
                         except Exception:
                             logger.exception("write_spread_history failed")
+
             elapsed = time.perf_counter() - t0
             logger.info("Price update done: %d symbols in %.1fs. Next in %ds.", len(new_cache), elapsed, interval)
         except asyncio.CancelledError:
@@ -132,7 +155,6 @@ async def _price_update_loop(app: FastAPI) -> None:
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Load symbols at startup, start background price updates, stop on shutdown."""
     logger.info("Symbol discovery: loading USDT perpetuals from Bybit, Binance, MEXC, Gate...")
     app.state.symbols = []
     app.state.prices_cache = {}
@@ -170,35 +192,7 @@ async def lifespan(app: FastAPI):
 
 
 app = FastAPI(title="Futures Spreads API", version="0.1.0", lifespan=lifespan)
-
-
-def _parse_ts(s: Optional[str], default: datetime) -> datetime:
-    """Parse from/to: ISO 8601 or Unix ms. If None or empty, return default."""
-    if not s or not str(s).strip():
-        return default
-    s = str(s).strip()
-    if s.isdigit():
-        return datetime.fromtimestamp(int(s) / 1000, tz=timezone.utc)
-    if s.upper().endswith("Z"):
-        s = s[:-1] + "+00:00"
-    dt = datetime.fromisoformat(s)
-    if dt.tzinfo is None:
-        dt = dt.replace(tzinfo=timezone.utc)
-    return dt
-
-
-def _build_response(symbol: str, prices: list[ExchangePrice], errors: list[dict]) -> PricesResponse:
-    if not prices:
-        arb, pairwise = compute_spreads([])
-    else:
-        arb, pairwise = compute_spreads(prices)
-    return PricesResponse(
-        symbol=symbol,
-        prices=prices,
-        arbitrage=arb,
-        pairwise_spreads=pairwise,
-        errors=errors,
-    )
+setup_middleware(app)
 
 
 @app.get("/health")
@@ -209,7 +203,7 @@ async def health() -> dict:
 @app.get("/v1/prices", response_model=None)
 async def get_prices(
     request: Request,
-    symbol: Optional[str] = Query(None, description="Single symbol, e.g. BTCUSDT. If omitted, return all symbols from cache."),
+    symbol: Optional[str] = Query(None),
 ) -> PricesResponse | list[PricesResponse]:
     cache = getattr(request.app.state, "prices_cache", None) or {}
     if symbol is not None and str(symbol).strip():
@@ -223,12 +217,11 @@ async def get_prices(
 @app.get("/v1/spread-history")
 async def get_spread_history(
     request: Request,
-    symbol: str = Query(..., description="Symbol, e.g. BTCUSDT"),
-    from_param: Optional[str] = Query(None, alias="from", description="ISO 8601 or Unix ms; default 24h ago"),
-    to_param: Optional[str] = Query(None, alias="to", description="ISO 8601 or Unix ms; default now"),
-    interval: Optional[int] = Query(None, description="Aggregation step in minutes (5, 15, 60); if omitted, raw points"),
+    symbol: str = Query(...),
+    from_param: Optional[str] = Query(None, alias="from"),
+    to_param: Optional[str] = Query(None, alias="to"),
+    interval: Optional[int] = Query(None),
 ):
-    """Spread history for charts. Requires DATABASE_URL."""
     pool = getattr(request.app.state, "db_pool", None)
     if not settings.database_url or pool is None:
         return JSONResponse(status_code=503, content={"error": "Spread history is disabled: DATABASE_URL not set"})
@@ -237,6 +230,7 @@ async def get_spread_history(
     to_ts = _parse_ts(to_param, now)
     interval_minutes = interval if interval is not None and interval >= 1 else None
     rows = await db.get_spread_history(pool, symbol.strip().upper(), from_ts, to_ts, interval_minutes)
+
     def _ts_iso(dt: datetime) -> str:
         if dt.tzinfo is None:
             dt = dt.replace(tzinfo=timezone.utc)

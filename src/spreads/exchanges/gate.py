@@ -1,5 +1,3 @@
-"""Gate.io USDT-margined futures (fx-api) provider."""
-
 import asyncio
 
 import httpx
@@ -11,11 +9,6 @@ SETTLE = "usdt"
 
 
 async def fetch_all_symbols_gate(timeout: float) -> set[str]:
-    """
-    Fetch all USDT-margined perpetual symbols from Gate.io.
-    GET /futures/usdt/contracts; /futures is for perpetuals. Filter status=="trading".
-    Symbol is in field "name", e.g. BTC_USDT.
-    """
     async with httpx.AsyncClient(timeout=timeout) as client:
         r = await client.get(f"{BASE}/futures/{SETTLE}/contracts")
         r.raise_for_status()
@@ -29,10 +22,6 @@ async def fetch_all_symbols_gate(timeout: float) -> set[str]:
 
 
 async def fetch_all_prices_gate(timeout: float) -> dict[str, ExchangePrices]:
-    """
-    Fetch all USDT-margined perpetual tickers from Gate.io in one request.
-    GET /futures/usdt/tickers without contract. Use highest_bid/lowest_ask or last for bid/ask.
-    """
     async with httpx.AsyncClient(timeout=timeout) as client:
         r = await client.get(f"{BASE}/futures/{SETTLE}/tickers")
         r.raise_for_status()
@@ -60,11 +49,6 @@ async def fetch_all_prices_gate(timeout: float) -> dict[str, ExchangePrices]:
 
 
 async def fetch_gate(symbol: str, timeout: float) -> ExchangePrices:
-    """
-    Fetch futures ticker from Gate.io fx-api.
-    Combines /futures/usdt/tickers (last, mark_price) and
-    /futures/usdt/order_book (bid/ask).
-    """
     sym = to_exchange_symbol(symbol, "gate")
     async with httpx.AsyncClient(timeout=timeout) as client:
         tickers, ob = await asyncio.gather(
@@ -82,7 +66,6 @@ async def fetch_gate(symbol: str, timeout: float) -> ExchangePrices:
     t_data = tickers.json()
     ob_data = ob.json()
 
-    # Tickers: can be list of one or single object
     if isinstance(t_data, list):
         t = t_data[0] if t_data else {}
     else:
@@ -90,8 +73,6 @@ async def fetch_gate(symbol: str, timeout: float) -> ExchangePrices:
 
     last = str(t.get("last") or "0")
     mark = str(t.get("mark_price") or last)
-
-    # Order book: bids/asks are [[price, size], ...], best at index 0
     bids = ob_data.get("bids") or []
     asks = ob_data.get("asks") or []
     bid = str(bids[0][0]) if bids else last
